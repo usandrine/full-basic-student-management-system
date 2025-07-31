@@ -22,7 +22,18 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+const cors = require('cors');
+
+// ... other code
+
+const corsOptions = {
+  origin: 'https://full-basic-student-management-system.vercel.app',
+  credentials: true, // needed for cookies/sessions
+};
+
+app.use(cors(corsOptions)); // <-- Use the new options here
+
+
 
 // Basic route for testing
 app.get('/', (req, res) => {
