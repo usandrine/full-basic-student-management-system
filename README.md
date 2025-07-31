@@ -9,7 +9,7 @@ A fullstack web application to manage student data, built with a modern technolo
 - **Role-Based Access Control:** Differentiates between student and admin user roles.
 - **Modern User Interface:** A responsive and intuitive design built with Tailwind CSS.
 
-## 🚀 Technologies Used
+##  Technologies Used
 
 ### Frontend
 - **Framework:** Next.js
@@ -36,5 +36,5 @@ Follow these steps to get the project up and running locally.
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
-cd your-repo-name
+git clone https://github.com/usandrine/full-basic-student-management-system.git
+cd full-basic-student-management-system
