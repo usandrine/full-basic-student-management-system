@@ -2,12 +2,12 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-const cors = require('cors');
+const cors = require('cors'); // <-- KEEP THIS LINE (the one at the top)
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-const studentRoutes = require('./routes/studentRoutes'); // Keep using this existing file
+const studentRoutes = require('./routes/studentRoutes');
 
 // Import middleware
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -22,39 +22,31 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-const cors = require('cors');
-
-// ... other code
+// <-- REMOVE THE DUPLICATE `const cors = require('cors');` LINE HERE
 
 const corsOptions = {
-  origin: 'https://full-basic-student-management-system.vercel.app',
-  credentials: true, // needed for cookies/sessions
+    origin: 'https://full-basic-student-management-system.vercel.app',
+    credentials: true,
 };
 
-app.use(cors(corsOptions)); // <-- Use the new options here
-
-
+app.use(cors(corsOptions)); // <-- This line is correct
 
 // Basic route for testing
 app.get('/', (req, res) => {
-  res.send('API is running...');
+    res.send('API is running...');
 });
 
 // Mount routes
-// Ensure all your specific API routes are mounted BEFORE the error handlers
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-
-// Mount the studentRoutes at the /api/admin path to match the frontend
-app.use('/api/admin/students', studentRoutes); // <-- CHANGE THIS LINE
+app.use('/api/admin/students', studentRoutes);
 
 // Error handling middleware
-// THESE MUST BE PLACED *AFTER* ALL YOUR app.use('/api/...') ROUTES
 app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
