@@ -25,7 +25,7 @@ app.use(express.json());
 // <-- REMOVE THE DUPLICATE `const cors = require('cors');` LINE HERE
 
 const corsOptions = {
-    origin: 'https://full-basic-student-management-system.vercel.app',
+    origin: '*',
     credentials: true,
 };
 
