@@ -1,4 +1,3 @@
-// frontend/app/admin/dashboard/page.tsx
 "use client"
 
 import { useEffect } from 'react';
@@ -9,9 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Users, UserCheck, UserX, GraduationCap, TrendingUp, TrendingDown, AlertCircle, Loader2 } from "lucide-react" // Import Loader2
+import { Users, UserCheck, UserX, GraduationCap, TrendingUp, TrendingDown, AlertCircle, Loader2 } from "lucide-react"
 
-import { useAuth } from '@/context/AuthContext'; // Import your useAuth hook
+import { useAuth } from '@/context/AuthContext';
 
 // Mock data (replace with actual data fetched from your backend in a real app)
 const stats = [
@@ -134,8 +133,9 @@ const alerts = [
   },
 ]
 
-export default function AdminDashboardPage() { // Renamed for clarity
-  const { user, loading, logout } = useAuth(); // Get user, loading, and logout from AuthContext
+export default function AdminDashboardPage() {
+  // We're only using `user` and `loading` here, so we remove the unused `logout`
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   // Redirect logic for authentication and role-based access

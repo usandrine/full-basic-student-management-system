@@ -1,11 +1,13 @@
 // backend/routes/authRoutes.js
 const express = require('express');
-const { registerUser, loginUser, logoutUser } = require('../controllers/authController');
+const { registerUser, loginUser, logoutUser, forgotPassword, resetPassword } = require('../controllers/authController');
 
 const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.post('/logout', logoutUser); // Client-side token removal is primary, but endpoint can exist
+router.post('/logout', logoutUser);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword); //  Reset password route
 
 module.exports = router;

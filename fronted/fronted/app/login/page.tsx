@@ -1,4 +1,3 @@
-// frontend/app/login/page.tsx
 "use client"
 
 import React, { useState, useEffect } from "react"
@@ -12,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { GraduationCap, Eye, EyeOff, Loader2 } from "lucide-react"
 
-import { useAuth } from '../../context/AuthContext'; // Adjust path if needed
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
   const { login, user, loading: authLoading, error: authError } = useAuth();
@@ -34,8 +33,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(formData.email, formData.password); // Call login from AuthContext
-      // If successful, useEffect will trigger router.push('/dashboard')
+      await login(formData.email, formData.password);
     } catch (err) {
       console.error("Login failed in component:", err);
     }
@@ -51,9 +49,9 @@ export default function LoginPage() {
   // Show loading state from AuthContext
   if (authLoading && !user) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <p className="text-xl text-gray-700">Loading...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+          <p className="text-xl text-gray-700">Loading...</p>
+      </div>
     );
   }
 
@@ -105,9 +103,15 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
-                </Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  {/* NEW: Forgot password link */}
+                  <Link href="/forgot-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Input
                     id="password"

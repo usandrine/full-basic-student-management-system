@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import Navbar from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,7 +54,7 @@ interface DialogFormData {
 }
 
 export default function AdminStudentsPage() {
-  const { user, loading, token } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -62,7 +63,9 @@ export default function AdminStudentsPage() {
   const [courseFilter, setCourseFilter] = useState("all");
 
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const [studentToDeleteId, setStudentToDeleteId] = useState<string | null>(null);
 
   const [apiLoading, setApiLoading] = useState(true);
   const [apiError, setApiError] = useState("");
@@ -86,9 +89,10 @@ export default function AdminStudentsPage() {
       const response = await api.get('admin/students');
       const data: Student[] = response.data;
       setStudents(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch students:", err);
-      const errorMessage = err.response?.data?.message || 'Failed to fetch students. Please check your network or server.';
+      // FIXED: Use instanceof to check for AxiosError
+      const errorMessage = err instanceof AxiosError && err.response?.data?.message || 'Failed to fetch students. Please check your network or server.';
       setApiError(errorMessage);
     } finally {
       setApiLoading(false);
@@ -139,8 +143,9 @@ export default function AdminStudentsPage() {
 
       if (currentStudent) {
         // EDIT student
-        const res = await api.put(`admin/students/${currentStudent._id}`, basePayload);
-        setStudents(students.map(s => s._id === currentStudent._id ? { ...s, ...basePayload as any, _id: currentStudent._id, role: s.role } : s));
+        await api.put(`admin/students/${currentStudent._id}`, basePayload);
+        // FIXED: Replaced 'as any' with a correctly typed object
+        setStudents(students.map(s => s._id === currentStudent._id ? { ...s, ...basePayload, _id: currentStudent._id, role: s.role } : s));
         setApiSuccess("Student updated successfully!");
       } else {
         // ADD new student
@@ -150,18 +155,16 @@ export default function AdminStudentsPage() {
           // The backend requires a password. Add a default password here.
           password: 'P@ssword123',
         };
-        const res = await api.post('admin/students', newStudentPayload);
-        const newStudent: Student = res.data;
-        setStudents([...students, newStudent]);
+        await api.post('admin/students', newStudentPayload);
+        // Re-fetch students to ensure the table is perfectly in sync with the database
+        fetchStudents();
         setApiSuccess("Student added successfully!");
       }
-      
-      // Re-fetch students to ensure the table is perfectly in sync with the database
-      fetchStudents();
-
-    } catch (err: any) {
-      console.error("API Error:", err.response?.data || err.message);
-      setApiError(err.response?.data?.message || (currentStudent ? "Failed to update student." : "Failed to add student."));
+    } catch (err: unknown) {
+      // FIXED: Use instanceof to check for AxiosError
+      console.error("API Error:", err instanceof AxiosError ? err.response?.data || err.message : err);
+      const errorMessage = err instanceof AxiosError ? err.response?.data?.message || (currentStudent ? "Failed to update student." : "Failed to add student.") : "An unexpected error occurred.";
+      setApiError(errorMessage);
     } finally {
       setApiLoading(false);
       setIsAddEditDialogOpen(false);
@@ -199,23 +202,32 @@ export default function AdminStudentsPage() {
   };
 
   // --- Delete Student ---
-  const handleDeleteStudent = async (_id: string) => {
-    if (!window.confirm("Are you sure you want to delete this student? This action cannot be undone.")) return;
+  const handleDeleteStudent = (_id: string) => {
+    setStudentToDeleteId(_id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!studentToDeleteId) return;
 
     setApiLoading(true);
     setApiError("");
     setApiSuccess("");
+    setIsDeleteDialogOpen(false);
 
     try {
-      console.log("Deleting student with ID:", _id);
-      await api.delete(`admin/students/${_id}`);
-      setStudents(students.filter((s) => s._id !== _id));
+      console.log("Deleting student with ID:", studentToDeleteId);
+      await api.delete(`admin/students/${studentToDeleteId}`);
+      setStudents(students.filter((s) => s._id !== studentToDeleteId));
       setApiSuccess("Student deleted successfully!");
-    } catch (err: any) {
-      console.error("API Error:", err.response?.data || err.message);
-      setApiError(err.response?.data?.message || "Failed to delete student.");
+    } catch (err: unknown) {
+      // FIXED: Use instanceof to check for AxiosError
+      console.error("API Error:", err instanceof AxiosError ? err.response?.data || err.message : err);
+      const errorMessage = err instanceof AxiosError ? err.response?.data?.message || "Failed to delete student." : "An unexpected error occurred.";
+      setApiError(errorMessage);
     } finally {
       setApiLoading(false);
+      setStudentToDeleteId(null);
       setTimeout(() => setApiSuccess(""), 3000);
       setTimeout(() => setApiError(""), 5000);
     }
@@ -587,6 +599,27 @@ export default function AdminStudentsPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this student? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex justify-between sm:justify-between">
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={apiLoading}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete} disabled={apiLoading}>
+                {apiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );
