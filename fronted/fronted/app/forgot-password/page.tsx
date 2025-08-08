@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+// Removed unused: import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,8 +22,8 @@ const SuccessAlert = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function ForgotPasswordPage() {
-  const { loading, error, requestPasswordReset } = useAuth();
-  
+  const { loading, requestPasswordReset } = useAuth(); // removed unused `error`
+
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [formError, setFormError] = useState('');
@@ -32,15 +32,14 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setFormError('');
     setMessage('');
-    
+
     if (!email) {
       setFormError('Please enter your email address.');
       return;
     }
-    
-    // Call the new password reset function from AuthContext
+
     const result = await requestPasswordReset(email);
-    
+
     if (result.success) {
       setMessage(result.message);
     } else {
@@ -57,13 +56,13 @@ export default function ForgotPasswordPage() {
             <span className="text-2xl font-bold text-gray-900">EduManage</span>
           </div>
         </div>
-        
+
         <Card className="shadow-xl border-0 rounded-lg">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-2xl font-bold text-center text-gray-900">Forgot Password</CardTitle>
             <CardDescription className="text-center text-gray-600">Enter your email to receive a password reset link.</CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-4">
             {message && (
               <SuccessAlert>
@@ -78,7 +77,7 @@ export default function ForgotPasswordPage() {
                 </AlertDescription>
               </Alert>
             )}
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
@@ -110,7 +109,7 @@ export default function ForgotPasswordPage() {
               </Button>
             </form>
           </CardContent>
-          
+
           <CardHeader className="flex flex-col space-y-4 pt-6">
             <div className="text-center text-sm text-gray-600">
               Remember your password?{" "}

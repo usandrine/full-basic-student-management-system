@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,7 +41,7 @@ const testimonials = [
   {
     name: "Dr. Sarah Johnson",
     role: "Academic Director",
-    content: "EduManage has transformed how we handle student administration. It's intuitive and powerful.",
+    content: "EduManage has transformed how we handle student administration. It&apos;s intuitive and powerful.",
     avatar: "/placeholder.svg?height=60&width=60&text=SJ",
   },
   {
@@ -161,12 +162,16 @@ export default function LandingPage() {
                       <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-4">"{testimonial.content}"</p>
+                  <p className="text-gray-600 mb-4">
+                    &quot;{testimonial.content}&quot;
+                  </p>
                   <div className="flex items-center">
-                    <img
+                    <Image
                       src={testimonial.avatar || "/placeholder.svg"}
                       alt={testimonial.name}
-                      className="h-10 w-10 rounded-full mr-3"
+                      width={40}
+                      height={40}
+                      className="rounded-full mr-3"
                     />
                     <div>
                       <div className="font-semibold text-gray-900">{testimonial.name}</div>

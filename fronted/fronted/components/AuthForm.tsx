@@ -1,49 +1,43 @@
-// frontend/components/AuthForm.tsx
 "use client";
 
 import React, { useState } from 'react';
 
-// 1. Define an interface for the form data (initial state, all strings)
 interface FormDataState {
   fullName: string;
   email: string;
   password: string;
   phoneNumber: string;
   courseOfStudy: string;
-  enrollmentYear: string; // Stored as a string from the input
+  enrollmentYear: string; // as string from input
   role: 'student' | 'admin' | '';
 }
 
-// 2. Define an interface for the data to be sent (enrollmentYear can be number or string)
 interface DataToSend {
   fullName: string;
   email: string;
   password: string;
   phoneNumber: string;
   courseOfStudy: string;
-  enrollmentYear: string | number; // Can be string (initial) or number (after conversion)
+  enrollmentYear: string | number;
   role: 'student' | 'admin' | '';
-  // Add other properties that might be sent but are not in formDataState if necessary
-  [key: string]: any; // Allows for additional dynamic properties if onSubmit expects them
 }
 
 interface AuthFormProps {
   type: 'login' | 'register';
-  // onSubmit now accepts the more flexible DataToSend type
   onSubmit: (formData: DataToSend) => void;
   loading: boolean;
   error: string | null;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit, loading, error }) => {
-  const [formData, setFormData] = useState<FormDataState>({ // Use the FormDataState interface
+  const [formData, setFormData] = useState<FormDataState>({
     fullName: '',
     email: '',
     password: '',
     phoneNumber: '',
     courseOfStudy: '',
     enrollmentYear: '',
-    role: type === 'register' ? 'student' : '', // Default to student for register
+    role: type === 'register' ? 'student' : '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -53,15 +47,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit, loading, error }) =
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create a copy of the form data, explicitly typed as DataToSend
     const dataToSend: DataToSend = { ...formData };
 
-    // Convert enrollmentYear to number if it's for registration and exists
-    if (type === 'register' && dataToSend.enrollmentYear !== '') { // Added check for non-empty string
+    if (type === 'register' && dataToSend.enrollmentYear !== '') {
       dataToSend.enrollmentYear = Number(dataToSend.enrollmentYear);
     }
-    
-    // The type of dataToSend is now correctly understood by TypeScript
+
     onSubmit(dataToSend);
   };
 
@@ -108,7 +99,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit, loading, error }) =
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   required
                 >
-                  <option value="">Select Role</option> {/* Added a default empty option */}
+                  <option value="">Select Role</option>
                   <option value="student">Student</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -130,7 +121,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ type, onSubmit, loading, error }) =
                   <div>
                     <label htmlFor="enrollmentYear" className="block text-sm font-medium text-gray-700">Enrollment Year</label>
                     <input
-                      type="number" // Changed to type="number" for better input handling
+                      type="number"
                       name="enrollmentYear"
                       id="enrollmentYear"
                       value={formData.enrollmentYear}

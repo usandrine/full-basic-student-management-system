@@ -1,17 +1,16 @@
-// frontend/app/dashboard/page.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import Navbar from "@/components/layout/navbar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { BookOpen, Calendar, GraduationCap, Mail, Phone, User, Edit, Award, Clock, TrendingUp, Loader2 } from "lucide-react"
+import { BookOpen, Calendar, GraduationCap, Mail, Phone, Edit, Award, Clock, TrendingUp, Loader2 } from "lucide-react"
 import { useAuth } from '@/context/AuthContext';
 
-// Mock data for student stats and courses (replace with actual API calls later)
+// Mock data
 const mockStats = [
   {
     title: "Current Courses",
@@ -74,37 +73,28 @@ const mockCourses = [
 ]
 
 export default function DashboardPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading } = useAuth(); // removed logout
   const router = useRouter();
 
-  // Redirect if not authenticated or if user role requires different dashboard
   useEffect(() => {
-    if (!loading) { // Ensure authentication state is resolved
+    if (!loading) {
       if (!user) {
-        router.push('/login'); // Not authenticated, redirect to login
+        router.push('/login');
       } else if (user.role === 'admin') {
-        router.push('/admin/dashboard'); // Admin, redirect to admin dashboard
+        router.push('/admin/dashboard');
       }
-      // If user is present and not admin (i.e., student), proceed to render student dashboard
     }
-  }, [user, loading, router]); // Dependencies: user, loading, router
+  }, [user, loading, router]);
 
-  // --- Render Loading State ---
-  // This state is shown while `loading` is true, or if `user` is null/undefined
-  // (meaning redirection is pending for unauthenticated users),
-  // or if an admin user is temporarily here before redirecting.
   if (loading || !user || (user && user.role === 'admin')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mr-2" />
-        <p className="text-xl text-gray-700">Loading dashboard...</p>
+        <p className="text-xl text-gray-700">Loading dashboard…</p>
       </div>
     );
   }
 
-  // --- Render Student Dashboard (if user exists and is a student) ---
-  // At this point, `user` is guaranteed to be defined and `user.role` is 'student'
-  // due to the checks above.
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} />
@@ -115,7 +105,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-gray-900">
             Welcome back, {user.fullName?.split(" ")[0] ?? "User"}! 👋
           </h1>
-          <p className="text-gray-600 mt-2">Here's what's happening with your studies today.</p>
+          <p className="text-gray-600 mt-2">Here’s what’s happening with your studies today.</p>
         </div>
 
         {/* Stats Grid */}
@@ -154,10 +144,8 @@ export default function DashboardPage() {
               <CardContent className="space-y-6">
                 <div className="flex flex-col items-center text-center">
                   <Avatar className="h-24 w-24 mb-4">
-                    {/* FIXED: Assuming 'profilePicture' is the correct property in your User interface */}
                     <AvatarImage src={user.profilePicture || "/placeholder.svg"} alt={user.fullName} />
                     <AvatarFallback className="bg-indigo-100 text-indigo-600 text-lg">
-                      {/* FIXED: Safe access to user.fullName */}
                       {user.fullName
                         ?.split(" ")
                         .map((n) => n[0])
@@ -166,7 +154,6 @@ export default function DashboardPage() {
                   </Avatar>
                   <h3 className="text-xl font-semibold text-gray-900">{user.fullName}</h3>
                   <Badge variant="secondary" className="mt-2">
-                    {/* MODIFIED LINE: Added conditional check to fix the error */}
                     {user?.role && (user.role.charAt(0).toUpperCase() + user.role.slice(1))}
                   </Badge>
                 </div>
@@ -199,7 +186,7 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* Current Courses - This section would be conditionally rendered or populated by API */}
+          {/* Current Courses */}
           <div className="lg:col-span-2">
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
