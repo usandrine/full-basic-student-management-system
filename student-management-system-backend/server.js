@@ -2,7 +2,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-const cors = require('cors'); // <-- KEEP THIS LINE (the one at the top)
+const cors = require('cors');
+
+// Import the cloudinary library
+const cloudinary = require('cloudinary').v2;
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -20,16 +23,22 @@ connectDB();
 
 const app = express();
 
+// Configure Cloudinary using environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 // Middleware
 app.use(express.json());
-// <-- REMOVE THE DUPLICATE `const cors = require('cors');` LINE HERE
 
 const corsOptions = {
     origin: '*',
     credentials: true,
 };
 
-app.use(cors(corsOptions)); // <-- This line is correct
+app.use(cors(corsOptions));
 
 // Basic route for testing
 app.get('/', (req, res) => {

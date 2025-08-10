@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useRouter } from 'next/navigation'
 import Navbar from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Camera, Save, Lock, CheckCircle, Loader2, XCircle, Eye, EyeOff } from "lucide-react"
+import { Camera, Save, Lock, CheckCircle, Loader2, XCircle, Eye, EyeOff, Upload } from "lucide-react"
 
 import { useAuth } from '../../context/AuthContext'
 import api from '@/utils/api'
@@ -64,12 +64,20 @@ export default function ProfilePage() {
     confirmPassword: '',
   })
 
+  // New state for handling image upload
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(false)
+  const [isImageUploading, setIsImageUploading] = useState(false); // New loading state for image upload
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Ref to the hidden file input element
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading) {
@@ -85,9 +93,19 @@ export default function ProfilePage() {
           enrollmentYear: currentUser.enrollmentYear?.toString() || '',
           status: currentUser.status || '',
         })
+        setImagePreviewUrl(currentUser.profilePicture || null);
       }
     }
   }, [user, loading, router])
+  
+  // Cleanup effect for the image preview URL
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   const handleInputChange = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, field: keyof T, value: T[keyof T]) => {
     setter(prev => ({
@@ -95,6 +113,68 @@ export default function ProfilePage() {
       [field]: value,
     }))
   }
+
+  // New function to handle file selection
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setProfileImageFile(file);
+      // Create a preview URL for the selected image
+      setImagePreviewUrl(URL.createObjectURL(file));
+      // Reset success/error messages related to the image upload
+      setSuccess('');
+      setError('');
+    }
+  };
+
+  // Function to trigger the hidden file input click
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // New function to handle the image upload
+  const handleImageUpload = async () => {
+    if (!profileImageFile) {
+      setError('Please select a file to upload.');
+      return;
+    }
+
+    setIsImageUploading(true);
+    setSuccess('');
+    setError('');
+
+    const formData = new FormData();
+    formData.append('profileImage', profileImageFile);
+
+    try {
+      // Use your existing API utility. Assuming the endpoint is correct.
+      // The backend should handle receiving 'profileImage' and saving the path.
+      const response = await api.put('/users/upload-profile-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (updateUser) {
+        // The API response should include the updated user object with the new profilePicture path
+        updateUser(response.data.user);
+      }
+      
+      setSuccess('Profile image updated successfully!');
+      // Reset the file state after a successful upload
+      setProfileImageFile(null);
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.message || 'Failed to upload profile image.');
+      } else {
+        setError('An unexpected error occurred during image upload.');
+      }
+    } finally {
+      setIsImageUploading(false);
+      setTimeout(() => setSuccess(''), 3000)
+      setTimeout(() => setError(''), 5000)
+    }
+  };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -217,7 +297,7 @@ export default function ProfilePage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center space-x-6">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={user.profilePicture || "/placeholder.svg"} alt={user.fullName || user.email} />
+                    <AvatarImage src={imagePreviewUrl || user.profilePicture || "/placeholder.svg"} alt={user.fullName || user.email} />
                     <AvatarFallback className="bg-indigo-100 text-indigo-600 text-lg">
                       {user.fullName
                         ? user.fullName.split(" ").map(n => n[0]).join("")
@@ -225,13 +305,42 @@ export default function ProfilePage() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <Button variant="outline" className="mb-2 bg-transparent">
+                    <Button
+                      variant="outline"
+                      className="mb-2 bg-transparent"
+                      onClick={handleImageClick}
+                    >
                       <Camera className="h-4 w-4 mr-2" />
                       Change Photo
                     </Button>
+
+                    {/* New button to trigger the image upload */}
+                    {profileImageFile && (
+                      <Button
+                        className="mb-2 ml-2 bg-indigo-600 hover:bg-indigo-700"
+                        onClick={handleImageUpload}
+                        disabled={isImageUploading}
+                      >
+                        {isImageUploading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        Upload Photo
+                      </Button>
+                    )}
                     <p className="text-sm text-gray-500">JPG, GIF or PNG. 1MB max.</p>
                   </div>
                 </div>
+
+                {/* This is the hidden file input element */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  accept="image/png, image/jpeg, image/gif"
+                />
 
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

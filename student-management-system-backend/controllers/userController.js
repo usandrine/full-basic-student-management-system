@@ -1,7 +1,12 @@
 // backend/controllers/userController.js
 const User = require('../models/User');
 const asyncHandler = require('express-async-handler');
-// No need for generateToken here as we're not logging in/registering again
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+
+// Configure multer to use memory storage for handling file uploads.
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // @desc    Get current user profile
 // @route   GET /api/users/profile
@@ -40,9 +45,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.fullName = req.body.fullName || user.fullName;
     user.email = req.body.email || user.email;
     user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
-    // profilePicture will be handled later if we implement file uploads
-    // user.profilePicture = req.body.profilePicture || user.profilePicture;
-
+    
     // Students can update their specific fields
     if (user.role === 'student') {
       user.courseOfStudy = req.body.courseOfStudy || user.courseOfStudy;
@@ -69,10 +72,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         enrollmentYear: updatedUser.enrollmentYear,
         status: updatedUser.status,
       }),
-      // We don't generate a new token on profile update unless password changes,
-      // but for simplicity, we can include it or rely on the existing one.
-      // If password changes, it's good practice to issue a new token.
-      // For now, we'll keep it simple and just return the updated user data.
     });
   } else {
     res.status(404);
@@ -80,7 +79,58 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Upload user profile image to Cloudinary
+// @route   PUT /api/users/upload-profile-image
+// @access  Private
+const uploadProfileImage = asyncHandler(async (req, res) => {
+  // We use multer as middleware to handle the 'profileImage' field.
+  // The asyncHandler wrapper is important to catch errors within the async block.
+  upload.single('profileImage')(req, res, async (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(500).json({ message: 'File upload failed.' });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded.' });
+    }
+    
+    try {
+      // The file buffer is converted to a Base64 string for Cloudinary.
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      
+      // Upload the image to Cloudinary
+      const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "profile_pictures", // Optional: Organizes files in a folder
+      });
+      
+      const imageUrl = cloudinaryResponse.secure_url;
+      
+      // Find the user and update their profile picture URL in the database
+      const user = await User.findById(req.user._id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found.' });
+      }
+      
+      user.profilePicture = imageUrl;
+      const updatedUser = await user.save();
+      
+      // Return the full updated user object
+      res.status(200).json({ user: updatedUser });
+      
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      res.status(500).json({
+        message: 'Error uploading image to Cloudinary.',
+        error: error.message
+      });
+    }
+  });
+});
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
+  uploadProfileImage,
 };
